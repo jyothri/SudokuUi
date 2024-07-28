@@ -1,7 +1,5 @@
 package com.jkurapati.sudoku.engine;
 
-import java.util.concurrent.TimeUnit;
-
 public class DefaultSolver implements Solver {
     private final BoardGenerator generator;
     private final BoardChangeListener listener;
@@ -29,7 +27,7 @@ public class DefaultSolver implements Solver {
                 board[unf[0]][unf[1]] = p;
                 notifyListener(board, unf[0], unf[1]);
                 if (backtrack(board, unf[0], unf[1])) {
-                     System.out.printf("Finalized value %c at [%d,%d]\n",p, unf[0],unf[1]);
+//                    System.out.printf("Finalized value %c at [%d,%d]\n", p, unf[0], unf[1]);
                     return true;
                 }
             }
@@ -41,8 +39,7 @@ public class DefaultSolver implements Solver {
 
     private void notifyListener(char[][] board, int x, int y) {
         try {
-            Thread.sleep(100);
-//            TimeUnit.SECONDS.sleep(1);
+            Thread.sleep(5);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }

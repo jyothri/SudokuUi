@@ -2,6 +2,7 @@ package com.jkurapati.sudoku.ui;
 
 import com.jkurapati.sudoku.engine.BoardChangeListener;
 import com.jkurapati.sudoku.engine.BoardGenerator;
+import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -207,12 +208,14 @@ public class SudokuUi implements BoardChangeListener {
     public void updateBoard(char[][] board, int x, int y) {
         TextField tile = textFieldCoordinates.get(new Coordinates(x, y));
         String value = Character.toString(board[x][y]);
-        if (value.equals(".")) {
-            tile.setText("");
-            tile.setStyle("-fx-background-color: green;");
-        } else {
-            tile.setText(value);
-            tile.setStyle("-fx-background-color: orange;");
-        }
+        Platform.runLater(() -> {
+            if (value.equals(".")) {
+                tile.setText("");
+                tile.setStyle("-fx-background-color: green;");
+            } else {
+                tile.setText(value);
+                tile.setStyle("-fx-background-color: orange;");
+            }
+        });
     }
 }
