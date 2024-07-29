@@ -1,17 +1,15 @@
 package com.jkurapati.sudoku.engine;
 
 public class DefaultSolver implements Solver {
-    private final BoardGenerator generator;
-    private final BoardChangeListener listener;
+    private BoardGenerator generator;
+    private BoardChangeListener listener;
     private final char[] posb = new char[]{'1', '2', '3', '4', '5', '6', '7', '8', '9'};
-
-    public DefaultSolver(BoardGenerator generator, BoardChangeListener boardChangeListener) {
-        this.generator = generator;
-        this.listener = boardChangeListener;
-    }
 
     @Override
     public boolean solve() {
+        if (generator == null || generator.getBoard().length != 9 || generator.getBoard()[0].length != 9) {
+            return false;
+        }
         return backtrack(generator.getBoard(), 0, 0);
     }
 
@@ -38,10 +36,8 @@ public class DefaultSolver implements Solver {
     }
 
     private void notifyListener(char[][] board, int x, int y) {
-        try {
-            Thread.sleep(5);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+        if (listener == null) {
+            return;
         }
         listener.updateBoard(board, x, y);
     }
@@ -75,5 +71,15 @@ public class DefaultSolver implements Solver {
             }
         }
         return true;
+    }
+
+    @Override
+    public void setBoardGenerator(BoardGenerator boardGenerator) {
+        this.generator = boardGenerator;
+    }
+
+    @Override
+    public void setBoardChangeListener(BoardChangeListener listener) {
+        this.listener = listener;
     }
 }

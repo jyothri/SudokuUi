@@ -2,14 +2,13 @@ package com.jkurapati.sudoku.ui;
 
 import com.jkurapati.sudoku.engine.BoardChangeListener;
 import com.jkurapati.sudoku.engine.BoardGenerator;
+import com.jkurapati.sudoku.engine.Solver;
 import javafx.application.Platform;
-import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
@@ -22,7 +21,7 @@ import java.util.HashMap;
 /**
  * Manages the window, and displays a pop up notification when the user completes the puzzle.
  */
-public class SudokuUi implements BoardChangeListener {
+public final class SudokuUi implements BoardChangeListener {
     //Size of the window
     private static final double WINDOW_Y = 732;
     private static final double WINDOW_X = 668;
@@ -45,7 +44,16 @@ public class SudokuUi implements BoardChangeListener {
     //The Key (<Key, Value> -> <Coordinates, Integer>) will be the HashCode of a given InputField for ease of lookup
     private final HashMap<Coordinates, SudokuTextField> textFieldCoordinates;
     private final SudokuEventHandler eventHandler;
-    private final BoardGenerator boardGenerator;
+    private BoardGenerator boardGenerator;
+    private Solver solver;
+
+    public void setSolver(Solver solver) {
+        this.solver = solver;
+    }
+
+    public void setBoardGenerator(BoardGenerator boardGenerator) {
+        this.boardGenerator = boardGenerator;
+    }
 
     /**
      * Stage and Group are JavaFX specific classes for modifying the UI. Think of them as containers of various UI
@@ -57,22 +65,20 @@ public class SudokuUi implements BoardChangeListener {
      *
      * @param stage
      */
-    public SudokuUi(Stage stage, BoardGenerator boardGenerator) {
+
+    SudokuUi(Stage stage) {
         this.stage = stage;
         this.root = new Group();
         this.textFieldCoordinates = new HashMap<>();
         this.eventHandler = new SudokuEventHandler(textFieldCoordinates);
-        this.boardGenerator = boardGenerator;
-        initializeUserInterface();
     }
 
-    public void initializeUserInterface() {
+    void initializeUserInterface() {
         drawBackground(root);
         drawTitle(root);
         drawSudokuBoard(root);
         drawTextFields(root);
         drawGridLines(root);
-        initializeBoard();
         stage.show();
     }
 
@@ -186,7 +192,32 @@ public class SudokuUi implements BoardChangeListener {
         root.getChildren().add(title);
     }
 
-    private void initializeBoard() {
+    void drawSolveButton() {
+        if (solver == null) {
+            return;
+        }
+        Button solveButton = new Button("Solve it!");
+        Font buttonFont = new Font(32);
+        solveButton.setFont(buttonFont);
+        solveButton.setAlignment(Pos.CENTER);
+
+        solveButton.setLayoutX(480);
+        solveButton.setLayoutY(658);
+
+        solveButton.setPrefHeight(20);
+        solveButton.setStyle("-fx-background-color: \n" + "        linear-gradient(#ffd65b, #e68400),\n" + "        linear-gradient(#ffef84, #f2ba44),\n" + "        linear-gradient(#ffea6a, #efaa22),\n" + "        linear-gradient(#ffe657 0%, #f8c202 50%, #eea10b 100%),\n" + "        linear-gradient(from 0% 0% to 15% 50%, rgba(255,255,255,0.9), rgba(255,255,255,0));\n" + "    -fx-background-radius: 30;\n" + "    -fx-background-insets: 0,1,2,3,0;\n" + "    -fx-text-fill: #654b00;\n" + "    -fx-font-weight: bold;\n" + "    -fx-font-size: 14px;\n" + "    -fx-padding: 10 20 10 20;");
+        solveButton.setOnAction((unused) -> {
+            System.out.println("Solving the board for user.");
+            new Thread(() -> {
+                solver.setBoardGenerator(this.boardGenerator);
+                solver.setBoardChangeListener(this);
+                solver.solve();
+            }).start();
+        });
+        root.getChildren().add(solveButton);
+    }
+
+    void initializeBoard() {
         char[][] board = boardGenerator.getBoard();
         for (int xIndex = 0; xIndex < 9; xIndex++) {
             for (int yIndex = 0; yIndex < 9; yIndex++) {
@@ -217,5 +248,57 @@ public class SudokuUi implements BoardChangeListener {
                 tile.setStyle("-fx-background-color: orange;");
             }
         });
+    }
+
+    public static final class SudokuUiBuilder {
+        private Stage stage;
+        private BoardGenerator boardGenerator;
+        private Solver solver;
+
+        public Solver getSolver() {
+            return solver;
+        }
+
+        public static SudokuUiBuilder newSudokuUiBuilder(Stage stage) {
+            SudokuUiBuilder sudokuUiBuilder = new SudokuUiBuilder();
+            sudokuUiBuilder.setStage(stage);
+            return sudokuUiBuilder;
+        }
+
+        public SudokuUi build() {
+            SudokuUi sudokuUi = new SudokuUi(this.getStage());
+            sudokuUi.initializeUserInterface();
+            if (this.getSolver() != null) {
+                sudokuUi.setSolver(this.solver);
+                sudokuUi.drawSolveButton();
+            }
+            if (this.getBoardGenerator() != null) {
+                sudokuUi.setBoardGenerator(this.getBoardGenerator());
+                sudokuUi.initializeBoard();
+            }
+            return sudokuUi;
+        }
+
+        public Stage getStage() {
+            return stage;
+        }
+
+        public void setStage(Stage stage) {
+            this.stage = stage;
+        }
+
+        public BoardGenerator getBoardGenerator() {
+            return boardGenerator;
+        }
+
+        public SudokuUiBuilder setBoardGenerator(BoardGenerator boardGenerator) {
+            this.boardGenerator = boardGenerator;
+            return this;
+        }
+
+        public SudokuUiBuilder setSolver(Solver solver) {
+            this.solver = solver;
+            return this;
+        }
     }
 }

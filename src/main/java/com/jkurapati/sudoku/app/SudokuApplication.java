@@ -1,7 +1,6 @@
 package com.jkurapati.sudoku.app;
 
 import com.jkurapati.sudoku.engine.DefaultSolver;
-import com.jkurapati.sudoku.engine.Solver;
 import com.jkurapati.sudoku.engine.SudokuBoard;
 import com.jkurapati.sudoku.ui.SudokuUi;
 import javafx.application.Application;
@@ -14,19 +13,16 @@ import java.io.IOException;
  * the program is running).
  */
 public class SudokuApplication extends Application {
+    public static void main(String[] args) {
+        launch(args);
+    }
 
     @Override
     public void start(Stage primaryStage) throws IOException {
-        SudokuUi uiImpl = new SudokuUi(primaryStage, new SudokuBoard());
+        SudokuUi.SudokuUiBuilder.newSudokuUiBuilder(primaryStage)
+                .setBoardGenerator(new SudokuBoard())
+                .setSolver(new DefaultSolver())
+                .build();
         System.out.println("Started UI");
-        Solver solver = new DefaultSolver(new SudokuBoard(), uiImpl);
-        new Thread(() -> {
-            solver.solve();
-        }).start();
-        System.out.println("Started solver");
-    }
-
-    public static void main(String[] args) {
-        launch(args);
     }
 }
